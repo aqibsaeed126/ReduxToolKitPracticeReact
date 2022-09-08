@@ -1,0 +1,230 @@
+--------- Redux Toolkit Tutorial Code Evolution --------
+
+// Redux Intro and refresher
+- Predictable state container JS Apps
+- JS based library. can be used with any UI library
+- state container. that contain global state for all components in App
+- Preditable means single flow of data. single way to change state of app, can be tracked easily later on
+
+
+// Redux Toolkit
+- Toolkit , Wrapper for efficient and quick redux development
+- Also intend to be standard way to write redux logic
+- WHy Redux toolkit ?
+     1- configuring redux is complicated
+     2- Need other package with redux like thunk, 
+     3- redux needs too much boiler plate Code
+- It give you direct shoer quick code
+- Redux toolkit also can work with plain JS as well as any UI library like react
+- We need to have react-redux as well. to work well with react ad redux toolkit
+- When to use Redux : its useful when you need state in large set of independant components
+
+
+// Three Core Concepts
+- Store - Cake Shop include cake count
+- Action - buy cake
+- Reducer - Shopkeeper , receives order and remove cake. and track inventory
+
+
+// Three Princples
+- Maintain Store as single JS object in Redux.
+- Only way to change state is dispatch Action.
+- Reducer are pure functions and only can change state and return a new state
+
+
+// Redux Store
+- Hold app state
+- can access state using getState()
+- can use store.subscribe or unsubscribe
+- can use store.dispatch
+
+
+// Bind Action Creators - Short way to bind action to store
+- 1st way is store.dispatch({type: CAKE_BUY, value: 1})  OR store.dispatch(buyCake())
+- 2nd way is bind actions to store and use with ease syntax. 
+        like const actions = redux.bindActionCreators({orderCake, restockCake}, store.dispatch)
+        then directly use actions.orderCake(); // Easy understandable and syntax
+
+
+// Multiple Reducer and Combine Reducer - 2 Shopkeeper
+- We can have icecream as well. shopkeepers are 2. but stock is same and gallaa is same
+- issue with single reducer become huge. scalability issues.
+- separate state and then rotreducer = combineReducers({cake: cakeReducer, icecream: icecreamReducer})
+- All sub reducers receive dispatched action, respond by reducer who handle that action.
+
+// Immer library
+- More complex state , to update state become difficilt doing immmutable way.
+- Immer is simple library , give you easy syntax to update state easily. but under hood it makes copy and do changes. 
+- produce method given by immer. its syntax is 
+     produce(state, (draft)=>{draft.address.street = action.payload})
+- underhood syntax used is return {...state, address: {...address, street, action.payload}} which is tough to write
+
+// Middleware
+- middle layer b/w dispatch and reducer.
+- for logging or async operation
+- use applyMiddleware as 2nd argument in createStore(reducer, applyMiddleWare(thunk or saga or custom created))
+
+// Async actions
+- API call to fetch or post data
+- define async actions,store and reducers.
+- async action creators. by using redux-thunk
+- inside action creator. return function(dispatch) { async call and then dispatch action}. you can handle async requests here. like fetch user. for API call use axios
+
+
+// Redux Toolkit Intro
+- Redux Concerns
+   - too much boiler plate code (create separate action and reducer files for all ?)
+   - additional libraries like thunk, immer, redux devtool
+- To improve dev experience quick and fast. abstract over setup process.
+- include some utilities as well.
+
+// Toolkit Project
+- create project rtk-demo 
+- install toolkit using npm i @reduxjs/toolkit
+- create recommended folder structure. index.js at top. then app-> store. then features->cake and icecream.
+
+
+// Slice Concept Toolkit
+- Slice is like feature/module file that contains everything of that feature/module. like actions , reducers, initial state, immer logic syntax. 
+- we use createSlice(name, initialState, reducers()) for cakeSlice.
+- in reducers we give key value pair as action name and function that takes state and update state with regular syntax.
+- actions automatically created wth names of key on reducers.
+- cakeSlice.actions already contains It
+- we have ease of single object handles every thing like immutbale state update easily, no need to define action creators, simple easy peasy. internally it uses immer as well.
+- reduce boiler plate code and dependency
+
+// configuring Store
+- toolkit give configure store instead of createStore. use store.js for it inside app folder.
+- configureStore take reducer: {cake: cakeReducer}
+- export store default
+- in index.js, use that store. get initial state using getState and subscribe to store same as plain redux
+- and use slice.actions to get actions access.
+-you can see store state in console after any actions
+
+// Adding new Icecream Slice
+- create icecream slice file and create slice like for cake as previously created for cake;
+- combine reducers using combineReducers. and set in configure store
+- upto you, if you want to use combine reducers or not. configureStore will do it for you. 
+- dispatch icecream actions as well. and see console.log result :)))
+
+
+// Middleware + attach Logger Middleware
+- install Logger package. npm i redux-logger
+- import it and use createLogger() methos to create logger Middleware
+- configure store give middleware property as well. its value is function with param as getDefaultMiddleware function.
+- You need to concat your middleware in it. like
+- middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+- n index.js , remove subscriptions. now it will handled by logger middleware.
+- Now it gives you prevState -> Action -> New Updated state.
+- Also it highlights if same action name is called like ordered. it will handle it like cake/orderd or icecream/ordered. take cake as slice name. and ordered as action name.
+
+
+// Extra Reducers Concepts
+- When action is dispatched , it will call all reducers and state update accordingly. 
+- Lets say a scenario come , in which buy cake get free icecream offer is there.
+- what you will do, add same action name in icecream reducer to handle icreamcount - 1 as well. It will work fine for plain redux project.
+- With Redux toolkit, if you want to respond to other slice actions as well there is special syntax for it.
+- There are 2 syntax for it. 
+- 1st is this one 
+extraReducers: {
+    ['cake/ordered']: (state, action) => {
+        state.numOfIcreams --;
+    }
+}
+- 2nd is using build syntax.
+extraReducers: (builder)=> {
+        builder.addCase(cakeActions.ordered, (state) => {
+            state.numOfIcecreams --;
+        })
+    }
+Easy peasy.
+
+// Async Thunk Handling in Redux Toolkit
+- we implement async operations in plain redux in simple way
+- applyMiddleWare(thunk) and return function from action and dispatch. simple.
+- in redux toolkit. lets make same example again. 
+- No need special config for enabling thunk.
+- create user slice in feature folder. 
+- simple 2 steps. 
+    - use createAsync thunk outside slice. mention action name as 1st param and second param as function do an API call using axios. so this createASync thunk will generate 3 action types as pending, fulfilled and rejected.
+    - Handle action types in extra reducer using fetchUser.fulfilled and write reducer function to update the state.
+Syntax is const fetchUsers = createAsynThunk('user/fetchUsers', ()=>{
+    return axios.get(URL).then((response)=>response.data.map((user)=>user.id))
+})
+extraReducers: builder => {
+    builder.addCase(fetchUser.pnding, state=>{update state});
+    builder.addCase(fetchUser.fulfilled, state=>{update state});
+}
+- add user Reducer is combiner reducer and configure store.
+- store.dispatch(fetchUser())
+- toolkit internally installed redux-thunk and immer for you. 
+
+
+------- React with Redux Toolkit -------
+
+// React Project setup
+- create react app and copy folders from old project.
+- update imports and install dependencies all
+- create cake and icecream component. 
+- show no of cakes/icecream and button to buy cake/icream and restockCake
+- Install react-redux package
+
+// Provide store around App
+- import Provider, provide store as props.
+- store will be available to all react components. It uses react contect under the hood
+
+
+// UseSelector
+- import useSelector hook from react-redux
+- it help you access state data
+- it take function with state as param and return whatever we need from state.
+- for this example, we want to get numOfCake.
+- useSelector((state)=> state.cake.numOfCake)
+- similarly show no of incecream as well
+- No need to connect store explicitely. it do automatically
+
+
+// UseDispatch
+- import useDispatch from react-redux
+- it helps you dispatch action directly to accept in reducer.
+- on click of buy cake/icecream and resticked. call dispatch action.
+- take action from slice.action ;)
+- onClick={()=>dispatch(ordered())} , where ordered is taken from slice.actions
+
+// Redux Dev Tools
+- install redux devtool
+- icon extension shows in dev console tabs
+- State tab , you can see state on any action live
+- it shows you all actions happening
+- Can manually dispatch in bottom in JS object.  dispatcher button
+- Slider play pause shows you all actions in sequence with state change
+- Time travel debugging
+
+// Async Thunk usage react redux toolkit project
+- Same as before. use createAsyncThunk. and handle them in extra reducers.
+- useEffect in user component. 
+- add useDispatch async actions on component load.
+- add isLoading with msg
+- isLoading and user available. showlist of users.
+
+// Typescript store
+- typescript for react-redux and redux toolkit
+- install dependencies and almost same project structure.
+- all files are now tsx
+- Add types to all slices cake, icecream and users like initialState.
+- Payload Action type in redux toolkit. add in reducer param
+- Type the store.
+- we can add type to useSelector and useDispatch as well. create new hook name with new types.
+- make whole app type supported strictly.
+
+
+
+
+
+
+
+
+
+
+
+
